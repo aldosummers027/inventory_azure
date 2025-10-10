@@ -5,7 +5,7 @@
   connection: local
   gather_facts: no
   vars:
-    ruta_csv: "./inventario_avanzado_vms.csv"
+    ruta_csv: "./inventario_avanzado_vms_{{ now(fmt='%Y-%m-%d') }}.csv"
 
   tasks:
     - name: 1. Crear el archivo CSV y escribir el encabezado
@@ -33,4 +33,5 @@
         - "{{ resultados_vms.results | rejectattr('failed', 'equalto', true) }}"
         - vms
         - flags:
+
             skip_missing: true
