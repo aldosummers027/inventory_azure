@@ -1,0 +1,25 @@
+# procesar_vm_horas.yml
+---
+- name: "Consultando métricas de CPU para {{ item.1.name }}"
+  ansible.builtin.command: >-
+    az monitor metrics list
+    --resource "{{ item.1.id }}"
+    --metric "Percentage CPU"
+    --aggregation Average
+    --interval 1h
+    --start-time "{{ inicio_mes_pasado }}"
+    --end-time "{{ inicio_este_mes }}"
+  register: datos_metrica_cli
+  ignore_errors: true
+
+- name: "Añadir horas de actividad de {{ item.1.name }} al CSV"
+  vars:
+    metric_json: "{{ datos_metrica_cli.stdout | from_json }}"
+    horas_activas: "{{ (metric_json.value[0].timeseries[0].data | selectattr('average', 'defined') | list) | length }}"
+    porcentaje_actividad: "{{ ((horas_activas | float / horas_totales_mes | float) * 100) | round(2) }}"
+  ansible.builtin.lineinfile:
+    path: "{{ ruta_csv }}"
+    line: >-
+      {{ item.0.item.display_name }},{{ item.1.resource_group }},{{ item.1.name }},
+      {{ horas_activas | default(0) }},{{ horas_totales_mes }},{{ porcentaje_actividad }}%
+  when: datos_metrica_cli is not failed and datos_metrica_cli.stdout != ""

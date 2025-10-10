@@ -1,0 +1,45 @@
+# reporte_horas_final.yml
+---
+- name: Generar Reporte Final de Horas de Actividad para TODAS las VMs
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    ruta_csv: "./reporte_horas_final_{{ now(fmt='%Y-%m-%d') }}.csv"
+    # --- Horas totales del mes (para un mes de 30 días) ---
+    horas_totales_mes: 720
+
+    # --- Lógica de fechas corregida ---
+    hoy: "{{ now(utc=True) }}"
+    mes_pasado: >-
+      {% if hoy.month == 1 %}12{% else %}{{ hoy.month - 1 }}{% endif %}
+    ano_de_mes_pasado: >-
+      {% if hoy.month == 1 %}{{ hoy.year - 1 }}{% else %}{{ hoy.year }}{% endif %}
+    inicio_mes_pasado: "{{ ano_de_mes_pasado }}-{{ '%02d' | format(mes_pasado|int) }}-01T00:00:00Z"
+    inicio_este_mes: "{{ hoy.strftime('%Y-%m-01') }}T00:00:00Z"
+
+  tasks:
+    - name: 1. Crear el archivo CSV y escribir el encabezado
+      ansible.builtin.copy:
+        content: "nombre_suscripcion,grupo_de_recursos,nombre_vm,horas_activas_estimadas,horas_totales_mes,porcentaje_actividad"
+        dest: "{{ ruta_csv }}"
+        force: yes
+
+    - name: 2. Obtener la lista de todas mis suscripciones
+      azure.azcollection.azure_rm_subscription_info:
+      register: lista_de_suscripciones
+
+    - name: 3. Para cada suscripcion, obtener la informacion de sus VMs
+      azure.azcollection.azure_rm_virtualmachine_info:
+        subscription_id: "{{ item.subscription_id }}"
+      loop: "{{ lista_de_suscripciones.subscriptions }}"
+      loop_control:
+        label: "{{ item.display_name }}"
+      register: resultados_vms
+      ignore_errors: true
+
+    - name: 4. Procesar cada VM para obtener sus horas de actividad
+      ansible.builtin.include_tasks: procesar_vm_horas.yml
+      loop: "{{ resultados_vms.results | rejectattr('failed', 'equalto', true) | subelements('vms') }}"
+      loop_control:
+        label: "{{ item.1.name }}"
