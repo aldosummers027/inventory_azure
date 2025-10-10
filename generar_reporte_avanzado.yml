@@ -1,0 +1,36 @@
+# generar_reporte_avanzado.yml
+---
+- name: Generar CSV Avanzado de VMs (con IP y Discos)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    ruta_csv: "./inventario_avanzado_vms.csv"
+
+  tasks:
+    - name: 1. Crear el archivo CSV y escribir el encabezado
+      ansible.builtin.copy:
+        content: "nombre_suscripcion,id_suscripcion,grupo_recursos,nombre_vm,estado,tamano_vm,tipo_so,ip_privada,discos_de_datos"
+        dest: "{{ ruta_csv }}"
+        force: yes
+
+    - name: 2. Obtener la lista de todas mis suscripciones
+      azure.azcollection.azure_rm_subscription_info:
+      register: lista_de_suscripciones
+
+    - name: 3. Para cada suscripcion, obtener la informacion de sus VMs
+      azure.azcollection.azure_rm_virtualmachine_info:
+        subscription_id: "{{ item.subscription_id }}"
+      loop: "{{ lista_de_suscripciones.subscriptions }}"
+      loop_control:
+        label: "{{ item.display_name }}"
+      register: resultados_vms
+      ignore_errors: true
+
+    - name: 4. Procesar cada VM encontrada
+      ansible.builtin.include_tasks: procesar_una_vm.yml
+      with_subelements:
+        - "{{ resultados_vms.results | rejectattr('failed', 'equalto', true) }}"
+        - vms
+        - flags:
+            skip_missing: true

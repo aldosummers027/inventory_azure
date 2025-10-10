@@ -1,0 +1,19 @@
+# procesar_una_vm.yml
+---
+- name: "Obteniendo IP para {{ item.1.name }}"
+  azure.azcollection.azure_rm_networkinterface_info:
+    subscription_id: "{{ item.0.item.subscription_id }}"
+    resource_group: "{{ item.1.resource_group }}"
+    name: "{{ item.1.network_interface_names[0] }}"
+  register: info_de_la_nic
+  when: item.1.network_interface_names is defined and item.1.network_interface_names | length > 0
+  ignore_errors: true
+
+- name: "Añadir datos de {{ item.1.name }} al CSV"
+  ansible.builtin.lineinfile:
+    path: "{{ ruta_csv }}"
+    line: >-
+      {{ item.0.item.display_name }},{{ item.0.item.subscription_id }},{{ item.1.resource_group }},{{ item.1.name }},
+      {{ item.1.power_state }},{{ item.1.vm_size }},{{ item.1.os_disk.os_type }},
+      {{ (info_de_la_nic.networkinterfaces[0].ip_configurations[0].private_ip_address) if (info_de_la_nic is not failed and info_de_la_nic.networkinterfaces) else 'N/A' }},
+      {{ item.1.data_disks | map(attribute='name') | join(';') | default('N/A') }}
