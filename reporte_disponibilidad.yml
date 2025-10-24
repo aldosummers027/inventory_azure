@@ -6,10 +6,8 @@
   gather_facts: no
   vars:
     ruta_csv: "./reporte_horas_final_{{ now(fmt='%Y-%m-%d') }}.csv"
-    # --- Horas totales del mes (para un mes de 30 días) ---
     horas_totales_mes: 720
 
-    # --- Lógica de fechas corregida ---
     hoy: "{{ now(utc=True) }}"
     mes_pasado: >-
       {% if hoy.month == 1 %}12{% else %}{{ hoy.month - 1 }}{% endif %}
