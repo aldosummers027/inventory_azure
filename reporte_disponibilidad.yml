@@ -5,7 +5,6 @@
   connection: local
   gather_facts: no
   vars:
-    ruta_csv: "./reporte_horas_final_{{ now(fmt='%Y-%m-%d') }}.csv"
     horas_totales_mes: 720
 
     hoy: "{{ now(utc=True) }}"
@@ -19,8 +18,8 @@
   tasks:
     - name: 1. Crear el archivo CSV y escribir el encabezado
       ansible.builtin.copy:
+        dest: "{{ output_csv_file }}"
         content: "nombre_suscripcion,grupo_de_recursos,nombre_vm,horas_activas_estimadas,horas_totales_mes,porcentaje_actividad"
-        dest: "{{ ruta_csv }}"
         force: yes
 
     - name: 2. Obtener la lista de todas mis suscripciones

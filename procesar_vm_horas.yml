@@ -18,7 +18,7 @@
     horas_activas: "{{ (metric_json.value[0].timeseries[0].data | selectattr('average', 'defined') | list) | length }}"
     porcentaje_actividad: "{{ ((horas_activas | float / horas_totales_mes | float) * 100) | round(2) }}"
   ansible.builtin.lineinfile:
-    path: "{{ ruta_csv }}"
+    path: "{{ output_csv_file }}"
     line: >-
       {{ item.0.item.display_name }},{{ item.1.resource_group }},{{ item.1.name }},
       {{ horas_activas | default(0) }},{{ horas_totales_mes }},{{ porcentaje_actividad }}%
