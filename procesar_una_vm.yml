@@ -11,7 +11,7 @@
 
 - name: "Añadir datos de {{ item.1.name }} al CSV"
   ansible.builtin.lineinfile:
-    path: "{{ ruta_csv }}"
+    path: "{{ output_csv_file }}"
     line: >-
       {{ item.0.item.display_name }},{{ item.0.item.subscription_id }},{{ item.1.resource_group }},{{ item.1.name }},
       {{ item.1.power_state }},{{ item.1.vm_size }},{{ item.1.os_disk.os_type }},

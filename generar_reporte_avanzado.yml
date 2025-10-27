@@ -4,14 +4,12 @@
   hosts: localhost
   connection: local
   gather_facts: no
-  vars:
-    ruta_csv: "./inventario_avanzado_vms_{{ now(fmt='%Y-%m-%d') }}.csv"
 
   tasks:
     - name: 1. Crear el archivo CSV y escribir el encabezado
       ansible.builtin.copy:
         content: "nombre_suscripcion,id_suscripcion,grupo_recursos,nombre_vm,estado,tamano_vm,tipo_so,ip_privada,discos_de_datos"
-        dest: "{{ ruta_csv }}"
+        dest: "{{ output_csv_file }}"
         force: yes
 
     - name: 2. Obtener la lista de todas mis suscripciones
