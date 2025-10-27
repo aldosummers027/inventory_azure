@@ -4,7 +4,7 @@ pipeline {
     environment {
         VENV_PATH = "/home/ubuntu/ansible_venv/bin/activate"
         PLAYBOOK_NAME = "generar_reporte_avanzado.yml" 
-        OUTPUT_CSV_FILE = "inventario_azure_{{ now(fmt='%Y-%m-%d') }}.csv"
+        OUTPUT_CSV_FILE = "inventario_azure.csv"
     }
 
     stages {
