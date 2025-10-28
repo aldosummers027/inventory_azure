@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+
+    environment {
+        VENV_PATH = "/home/ubuntu/ansible_venv/bin/activate"
+        PLAYBOOK_NAME = "reporte_disponibilidad.yml" 
+        OUTPUT_CSV_FILE = "disponibilidad_azure.csv"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Obteniendo el código del repositorio...'
+                checkout scm
+            }
+        }
+
+        stage('Activate Environment & Run Playbook') {
+            steps {
+                echo "Activando entorno virtual: ${env.VENV_PATH}"
+                echo "Ejecutando el playbook: ${env.PLAYBOOK_NAME}"
+                
+                sh """
+                    source ${env.VENV_PATH}
+                    ansible-playbook ${env.PLAYBOOK_NAME} --extra-vars "output_csv_file=${env.OUTPUT_CSV_FILE}"
+                """
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                echo 'Archivando el reporte CSV generado...'
+                archiveArtifacts artifacts: "${env.OUTPUT_CSV_FILE}", fingerprint: true
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Limpiando el workspace...'
+            cleanWs()
+        }
+    }
+}
